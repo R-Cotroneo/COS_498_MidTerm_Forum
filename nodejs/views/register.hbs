@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - {{title}}</title>
+    <link rel="stylesheet" href="/static/style.css?v=2">
+</head>
+<body>
+    {{> header}}
+
+    <main>
+        <h1>Create Your Account</h1>
+
+        <div class="form-container">
+            <form action="/register" method="POST">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required placeholder="Choose a unique username">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="Create a strong password">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn">Create Account</button>
+                </div>
+            </form>
+
+            <div class="text-center mt-2">
+                <p>Already have an account? <a href="/login">Login here</a></p>
+            </div>
+        </div>
+    </main>
+
+    {{> footer}}
+</body>
+</html>

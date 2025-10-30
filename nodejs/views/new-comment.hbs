@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Post - {{title}}</title>
+    <link rel="stylesheet" href="/static/style.css?v=2">
+</head>
+<body>
+    {{> header}}
+
+    <main>
+        <h1>Create New Post</h1>
+        
+        {{#if error}}
+        <div class="alert alert-danger">
+            {{error}}
+        </div>
+        {{/if}}
+
+        {{#if success}}
+        <div class="alert alert-success">
+            {{success}}
+        </div>
+        {{/if}}
+
+        {{#unless user}}
+        <div class="alert alert-info">
+            You must be <a href="/login">logged in</a> to create a new post.
+        </div>
+        {{/unless}}
+
+        {{#if user}}
+        <div class="form-container">
+            <form action="/new-comment" method="POST">
+                <div class="form-group">
+                    <label for="title">Post Title</label>
+                    <input type="text" id="title" name="title" required 
+                           value="{{formData.title}}" 
+                           placeholder="Enter a descriptive title for your post">
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category (Optional)</label>
+                    <select id="category" name="category">
+                        <option value="">Select a category...</option>
+                        <option value="general" {{#if (eq formData.category 'general')}}selected{{/if}}>General Discussion</option>
+                        <option value="help" {{#if (eq formData.category 'help')}}selected{{/if}}>Help & Support</option>
+                        <option value="news" {{#if (eq formData.category 'news')}}selected{{/if}}>News & Updates</option>
+                        <option value="feedback" {{#if (eq formData.category 'feedback')}}selected{{/if}}>Feedback</option>
+                        <option value="off-topic" {{#if (eq formData.category 'off-topic')}}selected{{/if}}>Off Topic</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="content">Post Content</label>
+                    <textarea id="content" name="content" required 
+                              placeholder="Share your thoughts, ask a question, or start a discussion...">{{formData.content}}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="allowReplies" {{#if formData.allowReplies}}checked{{/if}} checked>
+                        Allow others to reply to this post
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="notifyReplies" {{#if formData.notifyReplies}}checked{{/if}}>
+                        Notify me when someone replies
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn">Create Post</button>
+                    <a href="/comments" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="text-center mt-3">
+            <small style="color: #666;">
+                <strong>Posting Guidelines:</strong>
+                <ul style="text-align: left; display: inline-block; margin-top: 0.5rem;">
+                    <li>Be respectful and constructive</li>
+                    <li>Stay on topic and relevant</li>
+                    <li>Search existing posts before creating duplicates</li>
+                    <li>Use clear, descriptive titles</li>
+                </ul>
+            </small>
+        </div>
+        {{/if}}
+    </main>
+
+    {{> footer}}
+</body>
+</html>
