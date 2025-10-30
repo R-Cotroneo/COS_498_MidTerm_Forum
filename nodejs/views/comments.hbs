@@ -14,50 +14,26 @@
 
         <div class="text-center mb-3">
             {{#if user}}
-            <a href="/new-comment" class="btn">Create New Post</a>
+            <a href="/comment/new" class="btn">Create New Post</a>
             {{else}}
             <a href="/login" class="btn">Login to Post</a>
             {{/if}}
         </div>
 
-        {{#if posts}}
+        {{#if comments}}
         <div class="comments-container">
-            {{#each posts}}
+            {{#each comments}}
             <div class="comment-item">
                 <div class="comment-header">
                     <span class="comment-author">{{this.author}}</span>
                     <span class="comment-date">{{this.createdAt}}</span>
                 </div>
                 <div class="comment-content">
-                    {{#if this.excerpt}}
-                        {{this.excerpt}}
-                    {{else}}
-                        {{this.content}}
-                    {{/if}}
+                    {{this.text}}
                 </div>
             </div>
             {{/each}}
         </div>
-
-        {{#if pagination}}
-        <div class="pagination">
-            {{#if pagination.hasPrev}}
-                <a href="?page={{pagination.prevPage}}">&laquo; Previous</a>
-            {{/if}}
-            
-            {{#each pagination.pages}}
-                {{#if this.current}}
-                    <span class="current">{{this.number}}</span>
-                {{else}}
-                    <a href="?page={{this.number}}">{{this.number}}</a>
-                {{/if}}
-            {{/each}}
-            
-            {{#if pagination.hasNext}}
-                <a href="?page={{pagination.nextPage}}">Next &raquo;</a>
-            {{/if}}
-        </div>
-        {{/if}}
 
         {{else}}
         <div class="comments-container">
@@ -65,21 +41,11 @@
                 <h3>No Posts Yet</h3>
                 <p>Be the first to start a discussion in our forum!</p>
                 {{#if user}}
-                <a href="/new-comment" class="btn mt-2">Create the First Post</a>
+                <a href="/comment/new" class="btn mt-2">Create the First Post</a>
                 {{/if}}
             </div>
         </div>
         {{/if}}
-
-        <!-- Filter/Sort Options -->
-        <div class="text-center mt-3">
-            <div class="action-buttons">
-                <a href="/comments" class="btn btn-secondary">All Posts</a>
-                <a href="/comments?sort=newest" class="btn btn-secondary">Newest First</a>
-                <a href="/comments?sort=oldest" class="btn btn-secondary">Oldest First</a>
-                <a href="/comments?sort=popular" class="btn btn-secondary">Most Popular</a>
-            </div>
-        </div>
     </main>
 
     {{> footer}}

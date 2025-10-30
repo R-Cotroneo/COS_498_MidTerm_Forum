@@ -22,7 +22,7 @@ app.use(session({
     }
 }));
 
-// Global user injection so all templates (including header partial) get user
+// Global user injection so all forms get user
 app.use((req, res, next) => {
     if (req.session && req.session.isLoggedIn) {
         res.locals.user = {
@@ -35,6 +35,20 @@ app.use((req, res, next) => {
     next();
 });
 
+accounts = [
+    {
+        username: "admin",
+        password: "password"
+    }
+]; // In-memory user accounts
+comments = [
+    { 
+        author: "SampleUsr",
+        text: "This is a sample comment.",
+        createdAt: new Date()
+    }
+]; // In-memory comments/posts
+
 // ---- Routes ----
 // Home
 app.get('/', (req, res) => {
@@ -46,20 +60,26 @@ app.get('/', (req, res) => {
 });
 
 // Existing Comments
-comments = [];
-
 app.get('/comments', (req, res) => {
-    res.render('comments', { title: "Forum Posts" });
+    res.render('comments', { title: "Forum Posts", comments: comments });
 });
 
 // New Comment
 app.get('/comment/new', (req, res) => {
     res.render('new-comment', { title: "Create New Post" })
 });
+app.post('/comment', (req, res) => {
+    if (!req.session || !req.session.isLoggedIn) {
+        return res.status(401).send('You must be logged in to post a comment.');
+    }
+    const author = req.session.username;
+    const text = req.body.text;
+    const createdAt = new Date();
+    comments.push({ author, text, createdAt });
+    res.redirect('/comments');
+});
 
 // Login
-accounts = [];
-
 app.get('/login', (req, res) => {
     res.render('login', { title: "Login" })
 });
