@@ -66,7 +66,8 @@ app.get('/', (req, res) => {
         res.render('home', {
             title: "Welcome to the Community Forum",
             message: "This is the home page rendered with Handlebars.",
-            year: new Date().getFullYear()
+            year: new Date().getFullYear(),
+            comments: comments.slice(0, 3)
         });
 });
 
