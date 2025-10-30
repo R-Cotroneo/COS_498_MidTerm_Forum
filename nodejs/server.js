@@ -1,5 +1,6 @@
 const express = require('express');
 const session = require('express-session');
+const cookieParser = require('cookie-parser');
 const hbs = require('hbs');
 const path = require('path');
 const app = express();
@@ -13,12 +14,15 @@ hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
 app.use(session({
     secret: 'abcdefghijklmnopqrstuvwxyz',
     resave: false,
     saveUninitialized: false,
     cookie: {
         secure: false, // Set to true if using HTTPS
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 }));
 
@@ -43,11 +47,18 @@ accounts = [
 ]; // In-memory user accounts
 comments = [
     { 
-        author: "SampleUsr",
+        author: "SampleUser",
         text: "This is a sample comment.",
         createdAt: new Date()
     }
 ]; // In-memory comments/posts
+sessions = [
+    {
+        username: "admin",
+        sessionId: "1",
+        expires: 24 * 60 * 60 * 1000 // 24 hours
+    }
+]; // In-memory sessions
 
 // ---- Routes ----
 // Home
@@ -93,6 +104,13 @@ app.post('/login', (req, res) => {
     if (user) {
         req.session.isLoggedIn = true;
         req.session.username = username;
+
+        const sessionId = Math.random().toString(36).substring(2);
+        const expires = Date.now() + (24 * 60 * 60 * 1000); // 24 hours from now
+        sessions.push({ username: username, sessionId: sessionId, expires: expires });
+
+        req.session.customSessionId = sessionId;
+
         console.log('Successful login for user: ' + username);
         res.redirect('/');
     } else {
@@ -101,10 +119,20 @@ app.post('/login', (req, res) => {
     }
 });
 app.post('/logout', (req, res) => {
+    const sessionId = req.session ? req.session.customSessionId : null;
+    
+    if(sessionId) {
+        const index = sessions.findIndex(s => s.sessionId === sessionId);
+        if(index !== -1) {
+            sessions.splice(index, 1);
+        }
+    }
+
     req.session.destroy((err) => {
         if (err) {
             console.log('Error destroying session:', err);
         }
+
         res.redirect('/');
     });
 });
@@ -120,7 +148,7 @@ app.post('/register', (req, res) => {
 });
 
 app.get('/testing', (req, res) => {
-    res.send('List of accounts: ' + JSON.stringify(accounts));
+    res.send('List of sessions: ' + JSON.stringify(sessions));
 });
 
 // Start server
