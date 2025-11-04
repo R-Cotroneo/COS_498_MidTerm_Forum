@@ -1,6 +1,5 @@
 const express = require('express');
 const session = require('express-session');
-const cookieParser = require('cookie-parser');
 const hbs = require('hbs');
 const path = require('path');
 const app = express();
@@ -14,19 +13,19 @@ hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
 app.use(session({
     secret: 'abcdefghijklmnopqrstuvwxyz',
     resave: false,
     saveUninitialized: false,
-    cookie: {
-        secure: false, // Set to true if using HTTPS
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+    cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-// Global user injection so all forms get user
+// In-memory data
+const accounts = [ { username: 'admin', password: 'password' } ];
+const comments = [ { author: 'SampleUser', text: 'This is a sample comment.', createdAt: new Date() } ];
+const sessions = [];
+
+// Make user available to all templates
 app.use((req, res, next) => {
     if (req.session && req.session.isLoggedIn) {
         res.locals.user = {
@@ -39,36 +38,14 @@ app.use((req, res, next) => {
     next();
 });
 
-accounts = [
-    {
-        username: "admin",
-        password: "password"
-    }
-]; // In-memory user accounts
-comments = [
-    { 
-        author: "SampleUser",
-        text: "This is a sample comment.",
-        createdAt: new Date()
-    }
-]; // In-memory comments/posts
-sessions = [
-    {
-        username: "admin",
-        sessionId: "1",
-        expires: 24 * 60 * 60 * 1000 // 24 hours
-    }
-]; // In-memory sessions
-
-// ---- Routes ----
-// Home
+// Home route
 app.get('/', (req, res) => {
-        res.render('home', {
-            title: "Welcome to the Community Forum",
-            message: "This is the home page rendered with Handlebars.",
-            year: new Date().getFullYear(),
-            comments: comments.slice(0, 3)
-        });
+    res.render('home', {
+        title: 'Welcome to the Community Forum',
+        message: 'This is the home page rendered with Handlebars.',
+        year: new Date().getFullYear(),
+        recentComments: comments.slice(-3).reverse()
+    });
 });
 
 // Existing Comments
@@ -78,11 +55,14 @@ app.get('/comments', (req, res) => {
 
 // New Comment
 app.get('/comment/new', (req, res) => {
-    res.render('new-comment', { title: "Create New Post" })
+    res.render('new-comment', { title: 'Create New Post' });
 });
 app.post('/comment', (req, res) => {
     if (!req.session || !req.session.isLoggedIn) {
-        return res.status(401).send('You must be logged in to post a comment.');
+        return res.status(401).render('login', {
+            title: 'Login',
+            error: 'You must be logged in to post a comment.'
+        });
     }
     const author = req.session.username;
     const text = req.body.text;
@@ -93,7 +73,8 @@ app.post('/comment', (req, res) => {
 
 // Login
 app.get('/login', (req, res) => {
-    res.render('login', { title: "Login" })
+    if (req.session.isLoggedIn) return res.redirect('/');
+    res.render('login', { title: 'Login' });
 });
 app.post('/login', (req, res) => {
     const username = req.body.username;
@@ -105,35 +86,29 @@ app.post('/login', (req, res) => {
     if (user) {
         req.session.isLoggedIn = true;
         req.session.username = username;
-
-        const sessionId = Math.random().toString(36).substring(2);
-        const expires = Date.now() + (24 * 60 * 60 * 1000); // 24 hours from now
-        sessions.push({ username: username, sessionId: sessionId, expires: expires });
-
-        req.session.customSessionId = sessionId;
-
-        console.log('Successful login for user: ' + username);
-        res.redirect('/');
-    } else {
-        res.render('login', { error: 'Invalid username or password' });
-        console.log('Failed login attempt for user: ' + username);
+        const sessionId = Math.random().toString(36).slice(2);
+        res.cookie('sessionCookie', JSON.stringify({
+            username: username,
+            sessionId: sessionId
+        }));
+        sessions.push({ username, sessionId, created: Date.now() });
+        req.session.sessionId = sessionId;
+        return res.redirect('/');
     }
+    return res.status(401).render('login', {
+        title: 'Login',
+        error: 'Invalid username or password',
+        username
+    });
 });
-app.post('/logout', (req, res) => {
-    const sessionId = req.session ? req.session.customSessionId : null;
-    
-    if(sessionId) {
-        const index = sessions.findIndex(s => s.sessionId === sessionId);
-        if(index !== -1) {
-            sessions.splice(index, 1);
-        }
-    }
 
+// Logout (POST for CSRF-protection patterns)
+app.post('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             console.log('Error destroying session:', err);
         }
-
+        res.clearCookie('sessionCookie');
         res.redirect('/');
     });
 });
@@ -144,12 +119,18 @@ app.get('/register', (req, res) => {
 });
 app.post('/register', (req, res) => {
     const { username, password } = req.body;
-    accounts.push({ username: username, password: password });
+    if (!username || !password) {
+        return res.status(400).render('register', { title: 'Register', error: 'Username and password required' });
+    }
+    if (accounts.find(u => u.username === username)) {
+        return res.status(400).render('register', { title: 'Register', error: 'Username already exists' });
+    }
+    accounts.push({ username, password });
     res.redirect('/login');
 });
 
 app.get('/testing', (req, res) => {
-    res.send('List of sessions: ' + JSON.stringify(sessions));
+    res.send('List of accounts: ' + JSON.stringify(accounts));
 });
 
 // Start server

@@ -12,6 +12,10 @@
     <main>
         <h1>Welcome Back</h1>
 
+        {{#if error}}
+        <div class="error">{{error}}</div>
+        {{/if}}
+
         <div class="form-container">
             <form action="/login" method="POST">
                 <div class="form-group">
