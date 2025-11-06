@@ -1,5 +1,6 @@
 const express = require('express');
 const session = require('express-session');
+const cookieParser = require('cookie-parser')
 const hbs = require('hbs');
 const path = require('path');
 const app = express();
@@ -13,6 +14,7 @@ hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(session({
     secret: 'abcdefghijklmnopqrstuvwxyz',
     resave: false,
@@ -38,13 +40,13 @@ app.use((req, res, next) => {
     next();
 });
 
-// Home route
+// Home
 app.get('/', (req, res) => {
     res.render('home', {
         title: 'Welcome to the Community Forum',
         message: 'This is the home page rendered with Handlebars.',
         year: new Date().getFullYear(),
-        recentComments: comments.slice(-3).reverse()
+        comments: comments.slice(-3).reverse()
     });
 });
 
